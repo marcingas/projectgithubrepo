@@ -5,10 +5,13 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import pl.marcin.projectgit.entity.Branch;
 import pl.marcin.projectgit.entity.UserGitRepo;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,13 +28,45 @@ public class GitHubApiService {
 
         ResponseEntity<List<UserGitRepo>> response = restTemplate.exchange(request,
                 new ParameterizedTypeReference<List<UserGitRepo>>() {
-        });
+                });
         if (response.getStatusCode().is2xxSuccessful()) {
-            return response.getBody();
+            List<UserGitRepo> allRepositories = response.getBody();
+
+            List<UserGitRepo> nonForkRepositories = allRepositories.stream()
+                    .filter(repo -> !repo.isFork())
+                    .collect(Collectors.toList());
+            nonForkRepositories.forEach(repo -> {
+                List<String> branches = getRepositoryBranches(repo.getOwner().getLogin(), repo.getName());
+                repo.setBranchName(branches);
+            });
+
+            return nonForkRepositories;
         } else {
-            throw new RuntimeException("Failed to fetch user repositories from GitHub API");
+            throw new RuntimeException("Failed to get user repositories from GitHub API");
         }
 
+
+    }
+
+    private List<String> getRepositoryBranches(String owner, String repoName) {
+        String apiUrl = GITHUB_API_URL + "/repos/" + owner + "/" + repoName + "/branches";
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        RequestEntity<Void> request = new RequestEntity<>(httpHeaders, HttpMethod.GET, URI.create(apiUrl));
+        ResponseEntity<List<Branch>> response = restTemplate.exchange(request,
+                new ParameterizedTypeReference<List<Branch>>() {
+                });
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            List<Branch> branches = response.getBody();
+            List<String> branchNames = branches.stream()
+                    .map(Branch::getName)
+                    .collect(Collectors.toList());
+            return branchNames;
+        } else {
+            throw new RuntimeException("Failed to get repository branches from GitHub API");
+        }
 
     }
 }

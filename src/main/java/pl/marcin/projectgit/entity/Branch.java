@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class Branch {
     private String name;
-    private Long lastCommitSha;
+//    private Long lastCommitSha;
 }
