@@ -13,9 +13,10 @@ public class UserGitRepo {
 
     private Owner owner ;
 
-    List<String> branchName;
+    List<Branch> branch;
     @JsonProperty("fork")
     private boolean fork;
+
 
     public boolean isFork() {
         return fork;

@@ -6,9 +6,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import pl.marcin.projectgit.entity.Branch;
+import pl.marcin.projectgit.entity.Commit;
 import pl.marcin.projectgit.entity.UserGitRepo;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,10 +35,21 @@ public class GitHubApiService {
             List<UserGitRepo> nonForkRepositories = allRepositories.stream()
                     .filter(repo -> !repo.isFork())
                     .collect(Collectors.toList());
+
             nonForkRepositories.forEach(repo -> {
                 List<String> branches = getRepositoryBranches(repo.getOwner().getLogin(), repo.getName());
-                repo.setBranchName(branches);
-            });
+                List<Branch> branchList = branches.stream()
+                        .map(branchName -> {
+                            Branch branch = new Branch();
+                            branch.setName(branchName);
+                            String lastCommitSHA = getLastCommitSHA(repo.getOwner().getLogin(), repo.getName(), branchName);
+                            branch.setLastCommitSha(lastCommitSHA);
+                            return branch;
+                        })
+                        .collect(Collectors.toList());
+
+                repo.setBranch(branchList);
+                });
 
             return nonForkRepositories;
         } else {
@@ -67,6 +78,23 @@ public class GitHubApiService {
         } else {
             throw new RuntimeException("Failed to get repository branches from GitHub API");
         }
+    }
 
+    private String getLastCommitSHA(String owner, String repoName, String branch) {
+        String apiUrl = GITHUB_API_URL + "/repos/" + owner + "/" + repoName + "/commits/" + branch;
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        RequestEntity<Void> request = new RequestEntity<>(httpHeaders, HttpMethod.GET, URI.create(apiUrl));
+
+        ResponseEntity<Commit> response = restTemplate.exchange(request, Commit.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Commit commit = response.getBody();
+            if (commit != null) {
+                return commit.getSha();
+            }
+        }
+        return null;
     }
 }
