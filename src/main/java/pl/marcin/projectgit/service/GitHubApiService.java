@@ -19,11 +19,10 @@ public class GitHubApiService {
     private final String GITHUB_API_URL = "https://api.github.com";
     private final RestTemplate restTemplate;
 
-    public List<UserGitRepo> getUserRepositories(String username) {
+    public List<UserGitRepo> getUserRepositories(String username, HttpHeaders headers) {
         String apiUrl = GITHUB_API_URL + "/users/" + username + "/repos";
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        HttpHeaders httpHeaders = new HttpHeaders(headers);
         RequestEntity<Void> request = new RequestEntity<>(httpHeaders, HttpMethod.GET, URI.create(apiUrl));
 
         ResponseEntity<List<UserGitRepo>> response = restTemplate.exchange(request,
