@@ -19,9 +19,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GitHubRepoController {
     private final GitHubApiService gitHubApiService;
+//    @GetMapping("/repositories/{username}")
+//   public List<UserGitRepo> getRepositories(@PathVariable String username) {
+//        return gitHubApiService.getUserRepositories(username);
+//    }
 
     @GetMapping("/repositories/{username}")
-    public ResponseEntity<List<UserGitRepo>> getRepositories(@PathVariable String username) {
+    public ResponseEntity<List<?>> getRepositories(@PathVariable String username) {
         try {
             List<UserGitRepo> repositories = gitHubApiService.getUserRepositories(username);
             return ResponseEntity.ok(repositories);
@@ -32,7 +36,7 @@ public class GitHubRepoController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", statusCode);
             errorResponse.put("message", errorMessage);
-            return ResponseEntity.status(statusCode).body(Collections.emptyList());
+          return   ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
         } catch (RuntimeException exc) {
             String errorMessage = "Failed to get user Repositories form GitHub API";
             int statusCode = HttpStatus.INTERNAL_SERVER_ERROR.value();
@@ -40,7 +44,7 @@ public class GitHubRepoController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", statusCode);
             errorResponse.put("message", errorMessage);
-            return ResponseEntity.status(statusCode).body(Collections.emptyList());
+          return   ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
         }
 
     }
