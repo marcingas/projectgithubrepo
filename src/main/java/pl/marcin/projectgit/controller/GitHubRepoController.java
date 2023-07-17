@@ -1,5 +1,6 @@
 package pl.marcin.projectgit.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GitHubRepoController {
     private final GitHubApiService gitHubApiService;
+
 //    @GetMapping("/repositories/{username}")
-//   public List<UserGitRepo> getRepositories(@PathVariable String username) {
-//        return gitHubApiService.getUserRepositories(username);
+//    public ResponseEntity<List<?>> getRepositories(@PathVariable @Valid String username,
+//                                                   @RequestHeader @Valid HttpHeaders headers) {
+//        List<UserGitRepo> repositories = gitHubApiService.getUserRepositories(username, headers);
+//        return ResponseEntity.ok(repositories);
 //    }
 
     @GetMapping("/repositories/{username}")
@@ -39,7 +43,7 @@ public class GitHubRepoController {
                 errorResponse.put("message", errorMessage);
                 return ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
             }
-            List<UserGitRepo> repositories = gitHubApiService.getUserRepositories(username,headers);
+            List<UserGitRepo> repositories = gitHubApiService.getUserRepositories(username, headers);
             return ResponseEntity.ok(repositories);
         } catch (HttpClientErrorException.NotFound exc) {
             String errorMessage = "User not found";
@@ -48,7 +52,7 @@ public class GitHubRepoController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", statusCode);
             errorResponse.put("message", errorMessage);
-          return   ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
+            return ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
         } catch (RuntimeException exc) {
             String errorMessage = "Failed to get user Repositories form GitHub API";
             int statusCode = HttpStatus.INTERNAL_SERVER_ERROR.value();
@@ -56,9 +60,8 @@ public class GitHubRepoController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", statusCode);
             errorResponse.put("message", errorMessage);
-          return   ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
+            return ResponseEntity.status(statusCode).body(Collections.singletonList(errorResponse));
         }
-
     }
-
 }
+

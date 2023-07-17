@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class Owner {
     private String login;
-
     public String getLogin() {
         return login;
     }
